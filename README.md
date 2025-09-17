@@ -15,9 +15,11 @@ Purpose: Intended for learning and studying VIO.
 ## Running VINS-Fusion
 '''bash
 catkin_make
+'''
 
 '''bash
 rosrun vins vins_node config.yaml
 rosbag play xxx.bag
+'''
 
 ## Citation
