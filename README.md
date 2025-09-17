@@ -38,6 +38,6 @@ source ~/catkin_ws/devel/setup.bash
 rosbag play your_dataset.bag
 ```
 ## Citation
-https://github.com/fishros/install
-https://github.com/HKUST-Aerial-Robotics/VINS-Fusion
-https://github.com/ceres-solver/ceres-solver/releases/tag/2.0.0
+https://github.com/fishros/install\
+https://github.com/HKUST-Aerial-Robotics/VINS-Fusion\
+https://github.com/ceres-solver/ceres-solver/releases/tag/2.0.0\
