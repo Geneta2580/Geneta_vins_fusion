@@ -10,3 +10,7 @@ Dependencies: Requires only ROS and Ceres.
 Features: Includes Chinese comments in the source code.
 
 Purpose: Intended for learning and studying VIO.
+
+## Running VINS-Fusion
+
+## Citation
