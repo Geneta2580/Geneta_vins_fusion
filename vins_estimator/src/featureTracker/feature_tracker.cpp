@@ -110,6 +110,7 @@ map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> FeatureTracker::trackIm
     */
     cur_pts.clear();
 
+    // 前后帧光流追踪
     if (prev_pts.size() > 0)
     {
         TicToc t_o;
@@ -133,6 +134,7 @@ map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> FeatureTracker::trackIm
         else
             cv::calcOpticalFlowPyrLK(prev_img, cur_img, prev_pts, cur_pts, status, err, cv::Size(21, 21), 3);
         // reverse check
+        // 开启反向光流用于剔除KLT中的外点
         if(FLOW_BACK)
         {
             vector<uchar> reverse_status;
@@ -142,6 +144,7 @@ map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> FeatureTracker::trackIm
             //cv::calcOpticalFlowPyrLK(cur_img, prev_img, cur_pts, reverse_pts, reverse_status, err, cv::Size(21, 21), 3); 
             for(size_t i = 0; i < status.size(); i++)
             {
+                // 两个方向都track成功，并且反向跟踪的点与原始点距离不大于0.5像素，则认为该点跟踪成功
                 if(status[i] && reverse_status[i] && distance(prev_pts[i], reverse_pts[i]) <= 0.5)
                 {
                     status[i] = 1;
@@ -154,6 +157,7 @@ map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> FeatureTracker::trackIm
         for (int i = 0; i < int(cur_pts.size()); i++)
             if (status[i] && !inBorder(cur_pts[i]))
                 status[i] = 0;
+        // 剔除外点
         reduceVector(prev_pts, status);
         reduceVector(cur_pts, status);
         reduceVector(ids, status);
@@ -176,7 +180,7 @@ map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> FeatureTracker::trackIm
         ROS_DEBUG("detect feature begins");
         TicToc t_t;
         int n_max_cnt = MAX_CNT - static_cast<int>(cur_pts.size());
-        if (n_max_cnt > 0)
+        if (n_max_cnt > 0) // 需要补充新的特征点 
         {
             if(mask.empty())
                 cout << "mask is empty " << endl;
@@ -188,6 +192,7 @@ map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> FeatureTracker::trackIm
             n_pts.clear();
         ROS_DEBUG("detect feature costs: %f ms", t_t.toc());
 
+        // 将提取的新特征点加入到跟踪列表中
         for (auto &p : n_pts)
         {
             cur_pts.push_back(p);
@@ -197,10 +202,10 @@ map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> FeatureTracker::trackIm
         //printf("feature cnt after add %d\n", (int)ids.size());
     }
 
-    cur_un_pts = undistortedPts(cur_pts, m_camera[0]);
+    cur_un_pts = undistortedPts(cur_pts, m_camera[0]);  // 去畸变
     pts_velocity = ptsVelocity(ids, cur_un_pts, cur_un_pts_map, prev_un_pts_map);
 
-    if(!_img1.empty() && stereo_cam)
+    if(!_img1.empty() && stereo_cam)  // 若为双目相机，则在右目图像上跟踪特征点
     {
         ids_right.clear();
         cur_right_pts.clear();
@@ -258,6 +263,7 @@ map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> FeatureTracker::trackIm
     for(size_t i = 0; i < cur_pts.size(); i++)
         prevLeftPtsMap[ids[i]] = cur_pts[i];
 
+    // 左目（单目）特征图，光流追踪到的特征点坐标，速度的数据集合
     map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> featureFrame;
     for (size_t i = 0; i < ids.size(); i++)
     {
@@ -279,6 +285,7 @@ map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> FeatureTracker::trackIm
         featureFrame[feature_id].emplace_back(camera_id,  xyz_uv_velocity);
     }
 
+    // 右目特征图，和左目一样
     if (!_img1.empty() && stereo_cam)
     {
         for (size_t i = 0; i < ids_right.size(); i++)

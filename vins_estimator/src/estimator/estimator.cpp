@@ -164,7 +164,8 @@ void Estimator::inputImage(double t, const cv::Mat &_img, const cv::Mat &_img1)
     TicToc featureTrackerTime;
 
     if(_img1.empty())
-        featureFrame = featureTracker.trackImage(t, _img);
+        // featureframe是一个以特征点id为索引，14d的一个map（双目2*7d）
+        featureFrame = featureTracker.trackImage(t, _img);  
     else
         featureFrame = featureTracker.trackImage(t, _img, _img1);
     //printf("featureTracker time: %f\n", featureTrackerTime.toc());
@@ -1468,7 +1469,7 @@ void Estimator::predictPtsInNextFrame()
         return;
     // predict next pose. Assume constant velocity motion
     Eigen::Matrix4d curT, prevT, nextT;
-    getPoseInWorldFrame(curT);
+    getPoseInWorldFrame(curT);  // 这里的pose是Twc
     getPoseInWorldFrame(frame_count - 1, prevT);
     nextT = curT * (prevT.inverse() * curT);
     map<int, Eigen::Vector3d> predictPts;
@@ -1568,6 +1569,7 @@ void Estimator::outliersRejection(set<int> &removeIndex)
     }
 }
 
+// 快速积分，用于输出IMU的高频信息
 void Estimator::fastPredictIMU(double t, Eigen::Vector3d linear_acceleration, Eigen::Vector3d angular_velocity)
 {
     double dt = t - latest_time;
